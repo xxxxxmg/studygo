@@ -36,23 +36,62 @@ func (l *emailLogin) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 		resp.Write([]byte(err.Error()))
 		return
 	}
-	fmt.Println(string(data))
+	//查询该邮箱是否存在
+	var user model.User
+	db.Mysql().Where("email = ?", emailLogin.Email).Find(&user)
+	if user.Email != emailLogin.Email || user.Password != emailLogin.PassWord {
+		resp.Write([]byte("账号或者密码错误，请重新输入"))
+		return
+	}
+
+	fmt.Println("登录成功")
 	resp.Write(data)
 }
 
-func main() {
-	http.Handle("/emailLogin", &emailLogin{})
-	http.ListenAndServe(":8888", nil)
+type emailRegist struct{}
 
-	emailRegist := model.EmailRegist{}
-	http.HandleFunc("/emailRegist", func(w http.ResponseWriter, r *http.Request) {
-		//序列号结构体
-		data, err := json.Marshal(emailRegist)
-		if err != nil {
-			w.Write([]byte(err.Error()))
-			return
-		}
-		//响应序列化结果
-		w.Write([]byte(data))
+func (r *emailRegist) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
+	//1.判断请求方式
+	if req.Method != "POST" {
+		resp.Write([]byte("请求方式有误"))
+	}
+	//2.读取请求body
+	data, err := io.ReadAll(req.Body)
+	if err != nil {
+		resp.Write([]byte(err.Error()))
+		return
+	}
+	//3.解析请求body
+	var emailRegist model.EmailRegist
+	err = json.Unmarshal(data, &emailRegist)
+	if err != nil {
+		resp.Write([]byte(err.Error()))
+		return
+	}
+	//4.查询数据库是否存在
+	var user model.User
+	db.Mysql().Where("email = ?", emailRegist.Email).Find(&user)
+	if user.Email == emailRegist.Email {
+		resp.Write([]byte("邮箱已存在，请直接登录"))
+		return
+	}
+
+	//5.插入数据库
+	db.Mysql().Create(&model.User{
+		Email:    emailRegist.Email,
+		Password: emailRegist.PassWord,
 	})
+	fmt.Println("添加成功")
+
+	//6.响应请求
+	resp.Write(data)
+
+}
+
+func main() {
+	//登录测试
+	http.Handle("/emailLogin", &emailLogin{})
+	//注册测试
+	http.Handle("/emailRegist", &emailRegist{})
+	http.ListenAndServe(":8888", nil)
 }
