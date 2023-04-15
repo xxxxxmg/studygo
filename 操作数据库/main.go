@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"user/db"
 	"user/model"
 )
@@ -13,7 +14,7 @@ func init() {
 
 func main() {
 
-	var user []model.User
+	var userfriend []model.Userfriend
 
 	//新增数据
 	// db.Mysql().Create(&model.User{
@@ -23,13 +24,27 @@ func main() {
 	//修改数据
 	//db.Mysql().Model(user).Debug().Where("email = ?", "lisi@163.com").Update("email", "wangwu@163.com")
 	//查询所有
-	//db.Mysql().Find(&user)
+	db.Mysql().Find(&userfriend)
 	//查询单条数据
-	db.Mysql().Debug().Where("email=?", "zhousan@163.com").Find(&user)
+	//db.Mysql().Debug().Where("email=?", "zhousan@163.com").First(&user)
 	//修改数据
 	//db.Mysql().Model(user).Debug().Where("email = ?", "lisi@163.com").Update("email", "wangwu@163.com")
 	//删除指定数据
 	//db.Mysql().Debug().Where("email", "zhaoliu@163.com").Delete(&user)
 
-	fmt.Println(user)
+	if len(userfriend) >= 10 {
+		var tempid int = 0
+		var tempCreationTime int = math.MaxInt
+		for _, v := range userfriend {
+			fmt.Println(v.CreationTime)
+			if tempCreationTime > v.CreationTime {
+				tempCreationTime = v.CreationTime
+				tempid = v.Id
+			}
+		}
+		fmt.Println(tempid)
+		fmt.Println(tempCreationTime)
+		fmt.Println("这条数据将被删除", tempid)
+		db.Mysql().Where("id = ?", tempid).Delete(&userfriend)
+	}
 }
