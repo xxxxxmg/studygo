@@ -1,4 +1,4 @@
-module loginRegist
+module articleoperation
 
 go 1.18
 
