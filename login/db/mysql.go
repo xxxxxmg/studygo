@@ -22,9 +22,6 @@ func InitMysql(host string) {
 	sqlDB.SetConnMaxLifetime(59 * time.Second)
 }
 func Mysql() *gorm.DB {
-	//if g.DebugMode {
-	//	return mysqlDB.Debug()
-	//} else {
+
 	return mysqlDB
-	//}
 }
