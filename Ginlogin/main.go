@@ -11,7 +11,7 @@ import (
 
 func init() {
 	//调用db.InitMysql方法，并把数据传给host
-	db.InitMysql("root:root@tcp(192.168.100.44:3306)/tongzi?charset=utf8&parseTime=True&loc=Local")
+	db.InitMysql("root:root@tcp(127.0.0.1:3306)/test?charset=utf8&parseTime=True&loc=Local")
 }
 
 //登录
