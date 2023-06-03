@@ -23,8 +23,7 @@ func test(id int, wg *sync.WaitGroup) {
 	}
 	defer fp.Close()
 	defer wg.Done()
-	for i := id * 10; i < (id*10)+10; i++ {
-
+	for i := (id * 10); i < (id*10)+10; i++ {
 		if i == (id*10)+9 {
 			str := fmt.Sprintf("%d", i)
 			fp.WriteString(str)
