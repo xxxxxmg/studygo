@@ -3,6 +3,7 @@ package main
 import (
 	"articleoperation/db"
 	"articleoperation/model"
+	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -37,19 +38,22 @@ type BaseResp struct {
 func AddArticle(c *gin.Context) {
 	addTime := time.Now()
 	resp := BaseResp{}
-	req := new(model.ArticleInfo)
+	req := new(model.AddArticle)
 	if err := c.BindJSON(req); err != nil {
 		resp.Msg = "解析错误"
 		c.JSON(200, &resp)
 		return
 	}
-	item := model.ArticleInfo{
-		Title:        req.Title,
-		Author:       req.Author,
-		Context:      req.Context,
-		CreationTime: addTime.Unix(),
+	item := model.Article{
+		Title:    req.Title,
+		Author:   req.Author,
+		Context:  req.Context,
+		CreateAt: addTime.Unix(),
 	}
-	db.Mysql().Debug().Table("article").Create(&item)
+	err := db.Mysql().Model(&model.Article{}).Create(&item).Error
+	if err != nil {
+		fmt.Println("Create item err", err)
+	}
 	resp.Msg = "文章添加成功"
 	c.JSON(200, resp.Msg)
 }
@@ -57,68 +61,71 @@ func AddArticle(c *gin.Context) {
 //DelArticle 删除文章
 func DelArticle(c *gin.Context) {
 
-	//还没做文章是否存在判断
-
 	resp := BaseResp{}
-	req := new(model.ArticleInfo)
+	req := new(model.DelArticle)
 	if err := c.BindJSON(req); err != nil {
 		resp.Msg = "解析错误"
 		c.JSON(200, &resp)
 		return
 	}
 
-	article := model.ArticleInfo{}
-	db.Mysql().Debug().Table("article").Where("id = ?", req.Id).First(&article)
-	if article.Title == "" {
-		resp.Msg = "文章不存在"
+	err := db.Mysql().Model(&model.Article{}).Where("id", req.Id).Delete(&model.Article{}).Error
+	if err != nil {
+		resp.Msg = "文章删除失败"
 		c.JSON(200, resp.Msg)
 		return
 	}
-
-	db.Mysql().Debug().Table("article").Where("id = ?", req.Id).Delete(&article)
 	resp.Msg = "文章删除成功"
 	c.JSON(200, resp.Msg)
 }
 
 //UpdateArticle 修改文章
 func UpdateArticle(c *gin.Context) {
-	modifyTime := time.Now()
+	up_time := time.Now()
 	resp := BaseResp{}
-	req := new(model.ArticleInfo)
+	req := new(model.UpArticle)
 	if err := c.BindJSON(req); err != nil {
 		resp.Msg = "解析错误"
 		c.JSON(200, &resp)
 		return
 	}
-	article := model.ArticleInfo{}
-	db.Mysql().Debug().Table("article").Where("id = ?", req.Id).First(&article)
-	if article.Title != "" {
-		article = model.ArticleInfo{
-			Title:      req.Title,
-			Author:     req.Author,
-			Context:    req.Context,
-			ModifyTime: modifyTime.Unix(),
-		}
-		db.Mysql().Debug().Table("article").Where("id = ?", req.Id).Updates(&article)
-		resp.Msg = "文章修改成功"
+
+	article := model.Article{
+		Title:    req.Title,
+		Author:   req.Author,
+		Context:  req.Context,
+		UpdateAt: up_time.Unix(),
+	}
+	err := db.Mysql().Model(&model.Article{}).Where("id = ?", req.Id).Updates(&article).Error
+	if err != nil {
+		resp.Msg = "文章修改失败"
 		c.JSON(200, resp.Msg)
 		return
 	}
-	resp.Msg = "文章不存在"
+	resp.Msg = "文章修改成功"
 	c.JSON(200, resp.Msg)
 }
 
 //GetArticle 查询文章
 func GetArticle(c *gin.Context) {
 	resp := BaseResp{}
-	req := new(model.ArticleInfo)
+	req := new(model.SelArticle)
 	if err := c.BindJSON(req); err != nil {
 		resp.Msg = "解析错误"
 		c.JSON(200, &resp)
 		return
 	}
-	article := []model.ArticleInfo{}
-	db.Mysql().Debug().Table("article").Where("title like ? or context like ? or author like ?", req.Value, req.Value, req.Value).Find(&article)
+	article := []model.Article{}
+
+	str := "%" + req.Value + "%"
+	err := db.Mysql().Model(&model.Article{}).Debug().Where("title like ?", str).
+		Or("context like ?", str). //fmt.Sprintf("context like %q", ("%" + req.Value + "%"))
+		Or("author like ?", str).  //fmt.Sprintf("author like %q", ("%" + req.Value + "%"))
+		Find(&article).Error
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	if len(article) == 0 {
 		resp.Msg = "没有找到文章"
 		c.JSON(200, resp)
