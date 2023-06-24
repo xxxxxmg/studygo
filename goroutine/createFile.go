@@ -13,6 +13,7 @@ func main() {
 		go test(i, &wg)
 	}
 	wg.Wait()
+
 }
 
 func test(id int, wg *sync.WaitGroup) {
@@ -24,11 +25,11 @@ func test(id int, wg *sync.WaitGroup) {
 	defer fp.Close()
 	defer wg.Done()
 	for i := (id * 10); i < (id*10)+10; i++ {
-		if i == (id*10)+9 {
-			str := fmt.Sprintf("%d", i)
-			fp.WriteString(str)
-			return
-		}
+		// if i == (id*10)+9 {
+		// 	str := fmt.Sprintf("%d", i)
+		// 	fp.WriteString(str)
+		// 	return
+		// }
 		str := fmt.Sprintf("%d\n", i)
 		fp.WriteString(str)
 	}
